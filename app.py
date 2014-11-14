@@ -1,5 +1,6 @@
 # import the Flask class from the flask module
-from flask import Flask, render_template, redirect, url_for, request, session, flash
+from flask import Flask, render_template, redirect, url_for, \
+    request, session, flash, g
 from functools import wraps
 import sqlite3
 # create the application object
@@ -25,11 +26,17 @@ def login_required(f):
 @login_required
 def home():
     #return "Hello, World!"  # return a string
-    g.db = connect_db()
-    cur = g.db.excute('SELECT * FROM posts')
-    posts = [dict(title=row[0], description=row[1]) for row in cur.ferchall()]
-    g.db.close()
-    return render_template("index.html", posts=posts)
+    posts = []
+    try:
+        # return 'hello world!'
+        g.db = connect_db()
+        cur = g.db.execute('select * from posts')
+        posts = [dict(title=row[0], description=row[1]) for row in
+                 cur.fetchall()]
+        g.db.close()
+    except sqlite3.OperationalError:
+        flash('You have no database!')
+    return render_template('index.html', posts=posts)
 
 @app.route('/welcome')
 def welcome():
