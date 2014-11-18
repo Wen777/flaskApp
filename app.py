@@ -9,6 +9,8 @@ app = Flask(__name__)
 app.secret_key = "my precious"
 app.database = "flaskIntro.db"
 
+# def connect_db():
+#     return sqlite3.connect(app.database)
 
 # Login require decorator
 def login_required(f):
@@ -25,18 +27,35 @@ def login_required(f):
 @app.route('/')
 @login_required
 def home():
-    #return "Hello, World!"  # return a string
-    posts = []
+    # Following is another way to connect sqlite db
+    # posts = []
+    # cur = get_db().execute('select * from posts')
+    # posts = [dict(title=row[0], description=row[1]) for row in cur.fetchall()]
+    # close_connection(sqlite3.OperationalError)
     try:
-        # return 'hello world!'
         g.db = connect_db()
         cur = g.db.execute('select * from posts')
-        posts = [dict(title=row[0], description=row[1]) for row in
-                 cur.fetchall()]
+        posts_dict= []
+        for row in cur.fetchall():
+            posts_dict.append( dict(title=row[0], description=row[1]) )
+        # posts = [dict(title=row[0], description=row[1]) for row in cur.fetchall()]
         g.db.close()
     except sqlite3.OperationalError:
         flash('You have no database!')
-    return render_template('index.html', posts=posts)
+    return render_template('index.html', posts=posts_dict)
+
+# DATABASE= "flaskIntro.db"
+# def get_db():
+#     db = getattr(g, '_database', None)
+#     if db is None:
+#         db = g._database = sqlite3.connect(DATABASE)
+#     return db
+
+# @app.teardown_appcontext
+# def close_connection(exception):
+#     db = getattr(g, '_database', None)
+#     if db is not None:
+#         db.close()
 
 @app.route('/welcome')
 def welcome():
